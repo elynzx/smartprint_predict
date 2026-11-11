@@ -19,7 +19,7 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-export interface DisponibilidadItem {
+export interface ItemAvailability {
   insumo_id: number;
   nombre: string;
   categoria?: string;
@@ -69,14 +69,10 @@ export function getAlerts(token: string): Promise<AlertItem[]> {
   return request<AlertItem[]>("/api/alertas", {}, token);
 }
 
-export function getDisponibilidad(
+export function getAvailabilityStatus(
   token: string,
   query = "",
-): Promise<DisponibilidadItem[]> {
+): Promise<ItemAvailability[]> {
   const params = query ? `?q=${encodeURIComponent(query)}` : "";
-  return request<DisponibilidadItem[]>(
-    `/api/disponibilidad${params}`,
-    {},
-    token,
-  );
+  return request<ItemAvailability[]>(`/api/disponibilidad${params}`, {}, token);
 }

@@ -1,7 +1,7 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Layout } from "./layouts/Layout";
 import { useAuth } from "./context/AuthContext";
-import { Disponibilidad } from "./pages/Disponibilidad";
+import { AvailabilityView } from "./pages/Availability";
 import { Login } from "./pages/Login";
 import { Placeholder } from "./pages/Placeholder";
 
@@ -23,7 +23,7 @@ export function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<Protected />}>
-        <Route path="/disponibilidad" element={<Disponibilidad />} />
+        <Route path="/disponibilidad" element={<AvailabilityView />} />
       </Route>
       <Route element={<Protected operational />}>
         <Route path="/app" element={<Placeholder title="Inicio" />} />
