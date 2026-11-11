@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Form, HTTPException, Request, status
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core.deps import DbSession
 from app.core.security import create_access_token, verify_password
@@ -38,7 +38,10 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         ) from None
 
-    user = db.scalar(select(Usuario).where(Usuario.email == credentials.email))
+    clean_email = credentials.email.strip().lower()
+    user = db.scalar(
+        select(Usuario).where(func.lower(Usuario.email) == clean_email)
+    )
     if user is None or not user.activo or not verify_password(
         credentials.password, user.password_hash
     ):
