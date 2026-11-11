@@ -22,6 +22,7 @@ export interface LoginResponse {
 export interface DisponibilidadItem {
   insumo_id: number;
   nombre: string;
+  categoria?: string;
   unidad: string;
   estado_disponibilidad: "Disponible" | "Stock Limitado";
   observacion_comercial: string;
