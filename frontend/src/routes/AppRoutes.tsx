@@ -7,6 +7,7 @@ import { InventoryPage } from "../features/inventory/InventoryPage";
 import { MovementsPage } from "../features/movements/MovementsPage";
 import { PredictionsPage } from "../features/predictions/PredictionsPage";
 import { ReportsPage } from "../features/reports/ReportsPage";
+import { UsersPage } from "../features/users/UsersPage";
 import { RoleEnum } from "../types";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -51,6 +52,8 @@ export function AppRoutes() {
         <Route path="/app/predictions" element={<PredictionsPage />} />
         <Route path="/app/prediccion" element={<PredictionsPage />} />
         <Route path="/prediccion" element={<PredictionsPage />} />
+        <Route path="/app/users" element={<UsersPage />} />
+        <Route path="/app/usuarios" element={<UsersPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
