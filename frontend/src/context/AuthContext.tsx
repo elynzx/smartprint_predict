@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -28,8 +29,12 @@ function loginRequest(email: string, password: string): Promise<LoginResponse> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? (JSON.parse(saved) as AuthSession) : null;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? (JSON.parse(saved) as AuthSession) : null;
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
@@ -40,6 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session]);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    setSession(null);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user: session?.user ?? null,
@@ -47,12 +57,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading: false,
       login: async (email, password) => {
         const result = await loginRequest(email, password);
-        setSession({ token: result.access_token, user: result.user });
-        return result.user;
+        const enrichedUser = {
+          ...result.user,
+          email: result.user.email || email,
+        };
+        const nextSession: AuthSession = {
+          token: result.access_token,
+          user: enrichedUser,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+        setSession(nextSession);
+        return enrichedUser;
       },
-      logout: () => setSession(null),
+      logout,
     }),
-    [session],
+    [session, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
