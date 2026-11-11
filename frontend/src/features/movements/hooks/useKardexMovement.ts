@@ -20,6 +20,8 @@ export function useKardexMovement() {
   const { token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const querySupplyIdParam = searchParams.get("insumo_id");
+  const queryTypeParam = searchParams.get("type");
+  const queryQuantityParam = searchParams.get("quantity");
 
   const [supplies, setSupplies] = useState<SupplyItem[]>([]);
   const [movements, setMovements] = useState<MovementHistoryItem[]>([]);
@@ -32,8 +34,18 @@ export function useKardexMovement() {
     },
   );
 
-  const [movementType, setMovementType] = useState<MovementType>("SALIDA");
-  const [quantityInput, setQuantityInput] = useState<string>("");
+  const [movementType, setMovementType] = useState<MovementType>(() => {
+    const normalizedType = (queryTypeParam ?? "").toUpperCase();
+    return normalizedType === "ENTRADA" || normalizedType === "SALIDA"
+      ? normalizedType
+      : "SALIDA";
+  });
+  const [quantityInput, setQuantityInput] = useState<string>(() => {
+    const parsedQty = Number(queryQuantityParam);
+    return queryQuantityParam && !Number.isNaN(parsedQty) && parsedQty > 0
+      ? String(parsedQty)
+      : "";
+  });
   const [reason, setReason] = useState<string>(
     "Despacho a taller para Orden de Trabajo",
   );
@@ -104,12 +116,25 @@ export function useKardexMovement() {
   }, [loadSuppliesAndHistory]);
 
   useEffect(() => {
-    if (!querySupplyIdParam) return;
-    const parsed = Number(querySupplyIdParam);
-    if (!Number.isNaN(parsed) && parsed > 0) {
-      setSelectedSupplyId(parsed);
+    if (querySupplyIdParam) {
+      const parsed = Number(querySupplyIdParam);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        setSelectedSupplyId(parsed);
+      }
     }
-  }, [querySupplyIdParam]);
+    if (queryTypeParam) {
+      const normalizedType = queryTypeParam.toUpperCase();
+      if (normalizedType === "ENTRADA" || normalizedType === "SALIDA") {
+        setMovementType(normalizedType);
+      }
+    }
+    if (queryQuantityParam) {
+      const parsedQty = Number(queryQuantityParam);
+      if (!Number.isNaN(parsedQty) && parsedQty > 0) {
+        setQuantityInput(String(parsedQty));
+      }
+    }
+  }, [querySupplyIdParam, queryTypeParam, queryQuantityParam]);
 
   const selectedSupply = useMemo<SupplyItem | null>(() => {
     if (supplies.length === 0) return null;
