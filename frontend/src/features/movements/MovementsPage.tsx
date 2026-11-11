@@ -3,6 +3,7 @@ import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { formatNumber } from "../inventory/services/inventoryService";
 import { MovementForm } from "./components/MovementForm";
 import { MovementPreviewCard } from "./components/MovementPreviewCard";
+import { MovementsPagination } from "./components/MovementsPagination";
 import { useKardexMovement } from "./hooks/useKardexMovement";
 
 function formatOperationDate(isoString: string): string {
@@ -21,6 +22,11 @@ export function MovementsPage() {
   const {
     supplies,
     movements,
+    page,
+    limit,
+    totalRecords,
+    totalPages,
+    isLoadingMovements,
     selectedSupply,
     movementType,
     quantityInput,
@@ -38,6 +44,7 @@ export function MovementsPage() {
     errorMessage,
     toastMessage,
     warningMessage,
+    setPage,
     setMovementType,
     setQuantityInput,
     setReason,
@@ -123,6 +130,9 @@ export function MovementsPage() {
                   Trazabilidad auditada de entradas y salidas en planta.
                 </small>
               </div>
+              <span className="availability-meta-chip font-mono tabular-nums">
+                Total: {totalRecords} registros
+              </span>
             </div>
 
             {movements.length === 0 ? (
@@ -130,79 +140,92 @@ export function MovementsPage() {
                 No existen movimientos registrados aún.
               </div>
             ) : (
-              <div className="table-scroll">
-                <table className="inventory-table">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Tipo</th>
-                      <th>Insumo</th>
-                      <th className="num-col">Cantidad</th>
-                      <th>Referencia / Motivo</th>
-                      <th>Operador</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {movements.slice(0, 15).map((record) => {
-                      const isEntry = record.tipo === "ENTRADA";
-                      return (
-                        <tr key={record.id} className="inventory-row">
-                          <td className="font-mono tabular-nums text-[#75819A]">
-                            {formatOperationDate(record.fecha_operacion)}
-                          </td>
-                          <td>
-                            <span
-                              className={
-                                isEntry
-                                  ? "status good bg-[#E9FBF5] text-[#10B981]"
-                                  : "status warning bg-[#FFF8E7] text-[#F59E0B]"
-                              }
-                            >
-                              <i
+              <>
+                <div className="table-scroll">
+                  <table className="inventory-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Insumo</th>
+                        <th className="num-col">Cantidad</th>
+                        <th>Referencia / Motivo</th>
+                        <th>Operador</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {movements.map((record) => {
+                        const isEntry = record.tipo === "ENTRADA";
+                        return (
+                          <tr key={record.id} className="inventory-row">
+                            <td className="font-mono tabular-nums text-[#75819A]">
+                              {formatOperationDate(record.fecha_operacion)}
+                            </td>
+                            <td>
+                              <span
                                 className={
                                   isEntry
-                                    ? "status-dot dot-good"
-                                    : "status-dot dot-warning"
+                                    ? "status good bg-[#E9FBF5] text-[#10B981]"
+                                    : "status warning bg-[#FFF8E7] text-[#F59E0B]"
                                 }
-                              />
-                              {record.tipo}
-                            </span>
-                          </td>
-                          <td>
-                            <strong className="insumo-row-name text-[#17233D]">
-                              {record.insumo_nombre}
-                            </strong>
-                          </td>
-                          <td
-                            className={
-                              isEntry
-                                ? "num-col font-mono tabular-nums text-[#10B981]"
-                                : "num-col font-mono tabular-nums text-[#EF4444]"
-                            }
-                          >
-                            <strong>
-                              {isEntry ? "+" : "-"}
-                              {formatNumber(record.cantidad)}
-                            </strong>{" "}
-                            <span className="unit-label">{record.unidad}</span>
-                          </td>
-                          <td>
-                            {record.documento_referencia && (
-                              <span className="detail-code font-mono tabular-nums">
-                                {record.documento_referencia}
+                              >
+                                <i
+                                  className={
+                                    isEntry
+                                      ? "status-dot dot-good"
+                                      : "status-dot dot-warning"
+                                  }
+                                />
+                                {record.tipo}
                               </span>
-                            )}{" "}
-                            <span>{record.motivo}</span>
-                          </td>
-                          <td className="text-[#75819A]">
-                            {record.usuario_nombre}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td>
+                              <strong className="insumo-row-name text-[#17233D]">
+                                {record.insumo_nombre}
+                              </strong>
+                            </td>
+                            <td
+                              className={
+                                isEntry
+                                  ? "num-col font-mono tabular-nums text-[#10B981]"
+                                  : "num-col font-mono tabular-nums text-[#EF4444]"
+                              }
+                            >
+                              <strong>
+                                {isEntry ? "+" : "-"}
+                                {formatNumber(record.cantidad)}
+                              </strong>{" "}
+                              <span className="unit-label">
+                                {record.unidad}
+                              </span>
+                            </td>
+                            <td>
+                              {record.documento_referencia && (
+                                <span className="detail-code font-mono tabular-nums">
+                                  {record.documento_referencia}
+                                </span>
+                              )}{" "}
+                              <span>{record.motivo}</span>
+                            </td>
+                            <td className="text-[#75819A]">
+                              {record.usuario_nombre}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <MovementsPagination
+                  page={page}
+                  limit={limit}
+                  total={totalRecords}
+                  totalPages={totalPages}
+                  isLoading={isLoadingMovements}
+                  onPageChange={setPage}
+                />
+              </>
             )}
           </section>
         </>
