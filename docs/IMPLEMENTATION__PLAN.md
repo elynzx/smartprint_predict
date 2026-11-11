@@ -2,43 +2,36 @@
 
 ## Checkpoint 0: Estructura del Proyecto y Entorno
 
-- Crear directorios `backend/` y `frontend/`.
-- Configurar `.env.example` con `DATABASE_URL=postgresql://postgres:password@localhost:5432/smartprint_db`.
-- Definir archivo de inicialización de FastAPI (`main.py`) y servidor de desarrollo Vite en React.
+- Configurar directorios `backend/` y `frontend/`.
+- Configurar variables de entorno `.env` con soporte para PostgreSQL local (pgAdmin) y producción (Supabase).
+- Inicialización de FastAPI (`main.py`) y cliente Vite con React + TypeScript.
 
-## Checkpoint 1: Persistencia y Kardex Base (PostgreSQL)
+## Checkpoint 1: Persistencia Relacional y Kardex Base
 
-- Configurar SQLAlchemy, Alembic y Pydantic v2 en `backend/app/`.
-- Crear modelos `Usuario`, `Insumo` y `Movimiento` con Enum de roles: `administrador`, `trabajador`, `asesor_comercial`.
+- Definir modelos SQLAlchemy (`Usuario`, `Insumo`, `Movimiento`) y esquemas Pydantic v2.
 - Implementar validación antinegativa en `POST /api/movimientos` (HTTP 422 si causa stock negativo).
-- Escribir `seed.py` para insertar los 3 usuarios de prueba, catálogo inicial de insumos y 60 días de historial de consumo.
+- Implementar `seed.py` para poblar la base de datos con usuarios base por rol, catálogo inicial e historial sintético de 60 días de consumo.
 
-## Checkpoint 2: Autenticación JWT y Guards RBAC
+## Checkpoint 2: Autenticación JWT y RBAC por Roles
 
-- Implementar hash de contraseñas con `passlib/bcrypt` y emisión de tokens en `/api/auth/login`.
-- Crear dependencias de FastAPI `get_current_user` y `require_role(...)`.
-- Implementar el endpoint `GET /api/disponibilidad` protegido estrictamente para el rol `asesor_comercial` (filtrando campos numéricos y costos).
+- Emisión de tokens JWT con hash Bcrypt en `/api/auth/login`.
+- Implementar dependencias `get_current_user` y `require_roles(...)`.
+- Crear endpoint `GET /api/disponibilidad` protegido para el rol `asesor_comercial` (vista cualitativa sin cifras numéricas ni costos).
 
 ## Checkpoint 3: Motor Predictivo ML (Scikit-Learn + Pandas)
 
-- Implementar pipeline de preparación de datos agrupadore por días en `backend/app/ml/engine.py`.
-- Entrenar modelo de Regresión Lineal sobre movimientos de 'SALIDA'.
-- Calcular tasa diaria, días de cobertura restantes y métricas MAE/RMSE.
-- Exponer endpoint `GET /api/prediccion/{insumo_id}` con lógica de Prioridad Dinámica (Alta/Media/Baja).
+- Implementar pipeline de análisis en `backend/app/ml/engine.py` (Regresión Lineal sobre salidas de taller).
+- Calcular tasa de consumo diaria, días de cobertura ($stock / tasa$), métricas MAE/RMSE y manejar estados "sin consumo" para tasa $\le 0$.
+- Exponer `GET /api/prediccion/{insumo_id}` asignando Prioridad Dinámica (Alta < 20d/Crítico, Media < 40d/En Riesgo, Baja $\ge$ 40d).
 
-## Checkpoint 4: Frontend Responsivo Basado en Features (React + TypeScript + Tailwind)
+## Checkpoint 4: Frontend Responsivo Basado en Features
 
-- Modularizar el cliente HTTP en `frontend/src/api/client.ts` con manejo centralizado de Bearer JWT.
-- Estructurar componentes de layout (`components/layout/MainLayout.tsx`, `Sidebar.tsx`) y UI base (`components/ui/Modal.tsx`, `StatusBadge.tsx`, `LoadingSpinner.tsx`).
-- Dividir el frontend en dominios funcionales aislados (`features/`):
-  - `features/auth/`: `LoginForm.tsx`, `useAuth.ts`, `types.ts`
-  - `features/commercial/`: `CommercialPage.tsx`, `AvailabilityList.tsx`, `commercialService.ts`, `types.ts` (Vista cualitativa `/disponibilidad` exclusiva para `asesor_comercial`)
-  - `features/inventory/`: `InventoryPage.tsx`, `InventoryTable.tsx`, `InventoryRow.tsx`, `InsumoFormModal.tsx`, `useInsumos.ts`, `inventoryService.ts`, `types.ts` (Gestión de catálogo, stock mínimo y exportación CSV)
-  - `features/movements/`: `MovementsPage.tsx`, `MovementForm.tsx`, `MovementPreviewCard.tsx`, `useKardexMovement.ts`, `movementService.ts`, `types.ts` (Formulario de trazabilidad 2 columnas con validación antinegativa reactiva para `POST /api/movimientos`)
-  - `features/predictions/`: `PredictionsPage.tsx`, `PredictionCard.tsx`, `predictionService.ts`, `types.ts` (Gráficos Recharts, MAE/RMSE para `administrador`)
-- Configurar enrutamiento declarativo y guardias RBAC por rol en `routes/AppRoutes.tsx` y `routes/ProtectedRoute.tsx`.
+- Construir arquitectura basada en dominios en `frontend/src/features/` con nomenclatura 100% en inglés y textos UI en español.
+- Vistas implementadas: Factibilidad Comercial (`commercial/`), Inventario (`inventory/`), Registro de Movimientos (`movements/`), Predicción IA (`predictions/`), Alertas (`alerts/`), Dashboard (`dashboard/`) y Usuarios (`users/`).
+- Integración de validación antinegativa reactiva en formulario de salidas e inhabilitación de botones.
+- Implementación de paginación en el historial de Kardex y menú de perfil en Navbar con Logout seguro.
 
-## Checkpoint 5: Despliegue y Validación
+## Checkpoint 5: Suite de Pruebas Automatizadas y Despliegue Cloud
 
-- Ejecutar migraciones en Supabase mediante `DATABASE_URL` de producción.
-- Validar suites de pruebas con `pytest` y compilación frontend con `npm run build`.
+- Implementación de pruebas unitarias y de integración con `pytest` en backend (RBAC, freno antinegativo y modelo predictivo).
+- Validación de despliegue en Supabase y verificación de compilación en producción (`npm run build`).

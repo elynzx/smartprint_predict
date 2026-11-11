@@ -13,20 +13,19 @@ Actúas como un Arquitecto de Software Senior y Líder de Datos con amplia exper
 
 ## 3. Control de Accesos y Roles (RBAC)
 
-- `administrador`: Control total del sistema (catálogo, Kardex, ML, reportes, gestión de usuarios).
-- `trabajador`: Registro de entradas/salidas en almacén y lectura de inventario físico. No ve predicciones ni gestiona usuarios.
+- `administrador`: Control total del sistema (catálogo, Kardex, ML, reportes, usuarios).
+- `trabajador`: Registro de Kardex e inventario físico. No ve predicciones ni gestiona usuarios.
 - `asesor_comercial`: Vista de consulta cualitativa de disponibilidad (`/disponibilidad`). Consulta si los insumos requeridos para un proyecto están "Disponible" o con "Stock Limitado" para validar factibilidad comercial y cotizaciones, sin acceso a números de stock, costos internos, predicciones ni historial del taller.
 
 ## 4. Reglas de Negocio Críticas (No Negociables)
 
 - Freno Antinegativo de Stock: El campo `stock_actual` jamás puede ser menor a cero. Si `POST /api/movimientos` de tipo "SALIDA" genera stock negativo, el backend DEBE abortar con HTTP 422 Unprocessable Entity.
-- Validación de Cantidad: En cualquier movimiento de Kardex, `cantidad` debe ser estrictamente > 0.
+- Inviolabilidad de Kardex: En la edición de insumos (`PATCH /api/insumos/{id}`), el campo `stock_actual` es de solo lectura. El stock únicamente se modifica mediante transacciones auditadas de `ENTRADA` o `SALIDA`.
 - Prioridad Dinámica (Fusión Físico + Predictivo):
   - Alta: Cobertura IA < 20 días Ó Estado Físico Crítico (< 60% del stock mínimo).
   - Media: Cobertura IA < 40 días Ó Estado Físico En Riesgo (< 100% del stock mínimo).
   - Baja: Cobertura IA >= 40 días en estado estable.
-- Manejo de Tasa Nula/Negativa: Evitar división por cero. Si la tasa de consumo es <= 0, responder con estado explícito "sin consumo".
-- Formato de Fechas: Todo timestamp se almacena y transporta en UTC ISO 8601.
+- Prevención de División por Cero: Si la tasa de consumo es <= 0, responder con estado explícito "sin consumo".
 
 ## 5. Directivas de Ejecución para el Agente
 
