@@ -31,6 +31,7 @@ def get_disponibilidad(
         DisponibilidadResponse(
             insumo_id=insumo.id,
             nombre=insumo.nombre,
+            categoria=insumo.categoria,
             unidad=insumo.unidad,
             estado_disponibilidad=(
                 "Disponible"
