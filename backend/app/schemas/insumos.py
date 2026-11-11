@@ -10,6 +10,8 @@ class InsumoCreate(BaseModel):
     stock_minimo: Decimal = Field(ge=0)
     costo_unitario: Decimal = Field(ge=0)
     categoria: str
+    proveedor: str | None = None
+    proveedor_referencial: str | None = None
 
 
 class InsumoUpdate(BaseModel):
@@ -18,6 +20,8 @@ class InsumoUpdate(BaseModel):
     stock_minimo: Decimal | None = Field(default=None, ge=0)
     costo_unitario: Decimal | None = Field(default=None, ge=0)
     categoria: str | None = None
+    proveedor: str | None = None
+    proveedor_referencial: str | None = None
 
 
 class InsumoResponse(InsumoCreate):
