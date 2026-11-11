@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
 
 import pandas as pd
 from sklearn.linear_model import LinearRegression
@@ -19,13 +18,15 @@ class PredictionResult:
     tasa_consumo_diaria: float
     dias_cobertura: int | None
     consumo_estimado: float
+    consumo_estimado_30d: float
     prioridad: str
     estado_fisico: str
     metricas_error: dict[str, float]
+    observacion: str | None = None
 
 
 def _estado_fisico(stock_actual: float, stock_minimo: float) -> str:
-    if stock_actual < 0.60 * stock_minimo:
+    if stock_minimo > 0 and stock_actual < 0.60 * stock_minimo:
         return "Crítico"
     if stock_actual < stock_minimo:
         return "En Riesgo"
@@ -44,24 +45,30 @@ def _prioridad(dias_cobertura: int | None, estado_fisico: str) -> str:
     return "Baja"
 
 
-def _empty_prediction(insumo: Insumo, estado_fisico: str) -> PredictionResult:
+def _empty_prediction(
+    insumo: Insumo,
+    estado_fisico: str,
+    mae: float = 0.0,
+    rmse: float = 0.0,
+) -> PredictionResult:
     return PredictionResult(
         insumo_id=insumo.id,
         nombre=insumo.nombre,
         tasa_consumo_diaria=0.0,
         dias_cobertura=None,
         consumo_estimado=0.0,
+        consumo_estimado_30d=0.0,
         prioridad=_prioridad(None, estado_fisico),
         estado_fisico=estado_fisico,
-        metricas_error={"mae": 0.0, "rmse": 0.0},
+        metricas_error={"mae": round(mae, 4), "rmse": round(rmse, 4)},
+        observacion="sin consumo suficiente",
     )
 
 
 def calcular_prediccion_insumo(
     insumo_id: int, horizonte_dias: int, db: Session
 ) -> PredictionResult:
-    if horizonte_dias not in {30, 60, 90}:
-        raise ValueError("El horizonte debe ser 30, 60 o 90 días.")
+    effective_horizon = horizonte_dias if horizonte_dias in {30, 60, 90} else 30
 
     insumo = db.get(Insumo, insumo_id)
     if insumo is None or not insumo.activo:
@@ -70,6 +77,7 @@ def calcular_prediccion_insumo(
     stock_actual = float(insumo.stock_actual)
     stock_minimo = float(insumo.stock_minimo)
     estado_fisico = _estado_fisico(stock_actual, stock_minimo)
+
     movimientos = db.scalars(
         select(Movimiento)
         .where(
@@ -78,54 +86,63 @@ def calcular_prediccion_insumo(
         )
         .order_by(Movimiento.fecha_operacion)
     ).all()
-    if not movimientos:
+
+    if len(movimientos) < 2:
         return _empty_prediction(insumo, estado_fisico)
 
-    frame = pd.DataFrame(
-        {
-            "fecha": [movement.fecha_operacion.date() for movement in movimientos],
-            "cantidad": [float(movement.cantidad) for movement in movimientos],
-        }
-    )
-    daily_consumption = (
-        frame.groupby("fecha", as_index=False)["cantidad"].sum().sort_values("fecha")
-    )
-    daily_consumption["consumo_acumulado"] = daily_consumption["cantidad"].cumsum()
-    first_day: date = daily_consumption["fecha"].iloc[0]
-    daily_consumption["dias_desde_inicio"] = (
-        pd.to_datetime(daily_consumption["fecha"])
-        - pd.Timestamp(first_day)
-    ).dt.days
-
-    x = daily_consumption[["dias_desde_inicio"]]
-    y = daily_consumption["consumo_acumulado"]
-    model = LinearRegression().fit(x, y)
-    tasa = max(float(model.coef_[0]), 0.0)
-    predictions = model.predict(x)
-    mae = float(mean_absolute_error(y, predictions))
-    rmse = float(mean_squared_error(y, predictions) ** 0.5)
-
-    if tasa <= 0:
-        return PredictionResult(
-            insumo_id=insumo.id,
-            nombre=insumo.nombre,
-            tasa_consumo_diaria=0.0,
-            dias_cobertura=None,
-            consumo_estimado=0.0,
-            prioridad=_prioridad(None, estado_fisico),
-            estado_fisico=estado_fisico,
-            metricas_error={"mae": mae, "rmse": rmse},
+    try:
+        frame = pd.DataFrame(
+            {
+                "fecha": [
+                    movement.fecha_operacion.date() for movement in movimientos
+                ],
+                "cantidad": [float(movement.cantidad) for movement in movimientos],
+            }
+        )
+        daily_consumption = (
+            frame.groupby("fecha", as_index=False)["cantidad"]
+            .sum()
+            .sort_values("fecha")
         )
 
+        if len(daily_consumption) < 2:
+            return _empty_prediction(insumo, estado_fisico)
+
+        daily_consumption["consumo_acumulado"] = daily_consumption[
+            "cantidad"
+        ].cumsum()
+        first_day: date = daily_consumption["fecha"].iloc[0]
+        daily_consumption["dias_desde_inicio"] = (
+            pd.to_datetime(daily_consumption["fecha"])
+            - pd.Timestamp(first_day)
+        ).dt.days
+
+        x = daily_consumption[["dias_desde_inicio"]]
+        y = daily_consumption["consumo_acumulado"]
+        model = LinearRegression().fit(x, y)
+        tasa = max(float(model.coef_[0]), 0.0)
+        predictions = model.predict(x)
+        mae = float(mean_absolute_error(y, predictions))
+        rmse = float(mean_squared_error(y, predictions) ** 0.5)
+    except Exception:
+        return _empty_prediction(insumo, estado_fisico)
+
+    if tasa <= 0:
+        return _empty_prediction(insumo, estado_fisico, mae=mae, rmse=rmse)
+
     dias_cobertura = int(stock_actual / tasa)
-    consumo_estimado = tasa * horizonte_dias
+    consumo_estimado = round(tasa * effective_horizon, 2)
+    consumo_estimado_30d = round(tasa * 30, 2)
+
     return PredictionResult(
         insumo_id=insumo.id,
         nombre=insumo.nombre,
-        tasa_consumo_diaria=tasa,
+        tasa_consumo_diaria=round(tasa, 4),
         dias_cobertura=dias_cobertura,
         consumo_estimado=consumo_estimado,
+        consumo_estimado_30d=consumo_estimado_30d,
         prioridad=_prioridad(dias_cobertura, estado_fisico),
         estado_fisico=estado_fisico,
-        metricas_error={"mae": mae, "rmse": rmse},
+        metricas_error={"mae": round(mae, 4), "rmse": round(rmse, 4)},
+        observacion="proyección calculada",
     )
