@@ -26,6 +26,8 @@ export interface AlertItem {
 export type StatusVariant =
   | "Crítico"
   | "En Riesgo"
+  | "Alerta"
+  | "Revisión"
   | "Estable"
   | "Disponible"
   | "Stock Limitado"
