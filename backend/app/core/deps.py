@@ -15,9 +15,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 def get_current_user(
-    credentials: Annotated[
-        HTTPAuthorizationCredentials | None, Depends(bearer_scheme)
-    ],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     db: DbSession,
 ) -> Usuario:
     unauthorized = HTTPException(

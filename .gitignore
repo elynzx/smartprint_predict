@@ -40,6 +40,7 @@ build/
 coverage/
 
 # Editors and operating systems
+.vscode
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
