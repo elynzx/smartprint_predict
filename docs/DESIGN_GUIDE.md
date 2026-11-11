@@ -16,6 +16,7 @@ Este documento especifica la interfaz visual de alta fidelidad para RESEP S.R.L.
 - **Borde Estándar:** `#E8EDF5` (`border-[#E8EDF5]`)
 
 ### Semáforos de Estado (Badges Redondeados):
+
 - **Crítico (Rojo):** `bg-[#FFF0F0] text-[#EF4444] border border-[#FFF0F0]`
 - **En Riesgo / Revisión (Ámbar):** `bg-[#FFF8E7] text-[#F59E0B] border border-[#FFF8E7]`
 - **Estable (Verde):** `bg-[#E9FBF5] text-[#10B981] border border-[#E9FBF5]`
@@ -31,7 +32,7 @@ Este documento especifica la interfaz visual de alta fidelidad para RESEP S.R.L.
 
 2. **Navbar Superior Fija (`h-[74px] bg-white/80 backdrop-blur-md border-b border-[#E8EDF5]`):**
    - Buscador de `310px` con atajo `⌘ K`.
-   - Fecha actual en alta legibilidad: *"Hoy, 09 de octubre de 2026"*.
+   - Fecha actual en alta legibilidad: _"Hoy, 09 de octubre de 2026"_.
    - Perfil con avatar azul con siglas **"CM"**, nombre **"Carlos Méndez"** y rol **"Compras"**.
 
 ---
@@ -40,5 +41,5 @@ Este documento especifica la interfaz visual de alta fidelidad para RESEP S.R.L.
 
 - **Factibilidad Comercial (`/disponibilidad`):** Vista cualitativa limpia para `asesor_comercial` que únicamente presenta tarjetas con estado `"Disponible"` (verde) o `"Stock Limitado"` (ámbar), sin números de stock ni costos.
 - **Gestión de Inventario (`/inventario`):** Layout en Grid de 4 columnas (75% Tabla principal + 25% Tarjeta lateral de Detalle del insumo seleccionado).
-- **Registro de Movimientos (`/movimientos`):** Formulario con Tabs *Entrada/Salida*. Si la cantidad de salida digitada es mayor al stock disponible, se inhabilita el botón "Registrar movimiento" y se pinta el input de rojo.
-- **Predicción IA (`/prediccion`):** Gráficos Recharts cruzando la curva real (*Azul Real*) con la estimación futura (*Línea discontinua Cian*), métricas MAE/RMSE y tarjeta de recomendación gerencial.
+- **Registro de Movimientos (`/movimientos`):** Formulario con Tabs _Entrada/Salida_. Si la cantidad de salida digitada es mayor al stock disponible, se inhabilita el botón "Registrar movimiento" y se pinta el input de rojo.
+- **Predicción IA (`/prediccion`):** Gráficos Recharts cruzando la curva real (_Azul Real_) con la estimación futura (_Línea discontinua Cian_), métricas MAE/RMSE y tarjeta de recomendación gerencial.
