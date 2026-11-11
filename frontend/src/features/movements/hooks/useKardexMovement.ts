@@ -16,6 +16,8 @@ import type {
 export const EXCEEDED_STOCK_WARNING =
   "Cantidad ingresada supera el stock disponible en taller";
 
+export const DEFAULT_MOVEMENTS_PAGE_LIMIT = 10;
+
 export function useKardexMovement() {
   const { token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,6 +27,12 @@ export function useKardexMovement() {
 
   const [supplies, setSupplies] = useState<SupplyItem[]>([]);
   const [movements, setMovements] = useState<MovementHistoryItem[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(DEFAULT_MOVEMENTS_PAGE_LIMIT);
+  const [totalRecords, setTotalRecords] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [isLoadingMovements, setIsLoadingMovements] = useState<boolean>(false);
+
   const [selectedSupplyId, setSelectedSupplyId] = useState<number | null>(
     () => {
       const parsed = Number(querySupplyIdParam);
@@ -65,23 +73,48 @@ export function useKardexMovement() {
     }, 3800);
   }, []);
 
-  const loadSuppliesAndHistory = useCallback(
+  const loadPaginatedMovements = useCallback(
+    async (targetPage = page, targetLimit = limit) => {
+      if (!token) {
+        setMovements([]);
+        setTotalRecords(0);
+        setTotalPages(1);
+        setIsLoadingMovements(false);
+        return;
+      }
+
+      setIsLoadingMovements(true);
+      try {
+        const paginated = await fetchMovements(token, {
+          page: targetPage,
+          limit: targetLimit,
+        });
+        setMovements(paginated.items);
+        setTotalRecords(paginated.total);
+        setPage(paginated.page);
+        setLimit(paginated.limit);
+        setTotalPages(Math.max(1, paginated.total_pages));
+      } catch {
+        setMovements([]);
+      } finally {
+        setIsLoadingMovements(false);
+      }
+    },
+    [token, page, limit],
+  );
+
+  const loadSuppliesCatalog = useCallback(
     async (preferredSupplyId?: number) => {
       if (!token) {
         setSupplies([]);
-        setMovements([]);
         setIsLoadingSupplies(false);
         return;
       }
 
       setIsLoadingSupplies(true);
       try {
-        const [suppliesData, movementsData] = await Promise.all([
-          fetchSupplies(token),
-          fetchMovements(token).catch(() => [] as MovementHistoryItem[]),
-        ]);
+        const suppliesData = await fetchSupplies(token);
         setSupplies(suppliesData);
-        setMovements(movementsData);
 
         if (suppliesData.length > 0) {
           const urlId = Number(searchParams.get("insumo_id"));
@@ -112,8 +145,12 @@ export function useKardexMovement() {
   );
 
   useEffect(() => {
-    void loadSuppliesAndHistory();
-  }, [loadSuppliesAndHistory]);
+    void loadSuppliesCatalog();
+  }, [loadSuppliesCatalog]);
+
+  useEffect(() => {
+    void loadPaginatedMovements(page, limit);
+  }, [loadPaginatedMovements, page, limit]);
 
   useEffect(() => {
     if (querySupplyIdParam) {
@@ -151,7 +188,11 @@ export function useKardexMovement() {
     } else {
       setReason("Ingreso por orden de compra programada");
       if (selectedSupply) {
-        setSupplier(getReferentialSupplier(selectedSupply.categoria));
+        setSupplier(
+          selectedSupply.proveedor ||
+            selectedSupply.proveedor_referencial ||
+            getReferentialSupplier(selectedSupply.categoria),
+        );
       }
     }
     setErrorMessage("");
@@ -222,7 +263,11 @@ export function useKardexMovement() {
     try {
       const response = await createMovement(payload, token);
       resetFormFields();
-      await loadSuppliesAndHistory(selectedSupply.id);
+      setPage(1);
+      await Promise.all([
+        loadSuppliesCatalog(selectedSupply.id),
+        loadPaginatedMovements(1, limit),
+      ]);
       showToast(
         `${response.tipo === "ENTRADA" ? "Entrada" : "Salida"} registrada para "${selectedSupply.nombre}". Saldo resultante: ${response.saldo_resultante} ${selectedSupply.unidad}.`,
       );
@@ -240,6 +285,11 @@ export function useKardexMovement() {
   return {
     supplies,
     movements,
+    page,
+    limit,
+    totalRecords,
+    totalPages,
+    isLoadingMovements,
     selectedSupply,
     movementType,
     quantityInput,
@@ -259,6 +309,8 @@ export function useKardexMovement() {
     errorMessage,
     toastMessage,
     warningMessage: isInvalidSalida ? EXCEEDED_STOCK_WARNING : "",
+    setPage,
+    setLimit,
     setMovementType,
     setQuantityInput,
     setReason,
