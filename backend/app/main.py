@@ -11,6 +11,7 @@ from app.routers import (
     movimientos,
     prediccion,
     reportes,
+    usuarios,
 )
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
@@ -29,6 +30,7 @@ app.include_router(movimientos.router)
 app.include_router(prediccion.router)
 app.include_router(alertas.router)
 app.include_router(reportes.router)
+app.include_router(usuarios.router)
 
 
 @app.get("/health", tags=["health"])
