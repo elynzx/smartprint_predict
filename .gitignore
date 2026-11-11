@@ -7,6 +7,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 *.so
 .Python
 .venv/
@@ -24,6 +25,10 @@ htmlcov/
 *.log
 *.sqlite
 *.sqlite3
+*.db
+test_*.db
+.pytest_cache/
+.coverage
 
 # Node.js and Vite
 node_modules/
