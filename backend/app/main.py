@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.routers import (
     alertas,
     auth,
+    dashboard,
     disponibilidad,
     insumos,
     movimientos,
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth.router)
+app.include_router(dashboard.router)
 app.include_router(disponibilidad.router)
 app.include_router(insumos.router)
 app.include_router(movimientos.router)
