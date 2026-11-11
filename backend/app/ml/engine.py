@@ -93,28 +93,23 @@ def calcular_prediccion_insumo(
     try:
         frame = pd.DataFrame(
             {
-                "fecha": [
-                    movement.fecha_operacion.date() for movement in movimientos
-                ],
+                "fecha": [movement.fecha_operacion.date() for movement in movimientos],
                 "cantidad": [float(movement.cantidad) for movement in movimientos],
             }
         )
         daily_consumption = (
-            frame.groupby("fecha", as_index=False)["cantidad"]
+            frame.groupby("fecha", as_index=False)[["cantidad"]]
             .sum()
-            .sort_values("fecha")
+            .sort_values(by="fecha")
         )
 
         if len(daily_consumption) < 2:
             return _empty_prediction(insumo, estado_fisico)
 
-        daily_consumption["consumo_acumulado"] = daily_consumption[
-            "cantidad"
-        ].cumsum()
+        daily_consumption["consumo_acumulado"] = daily_consumption["cantidad"].cumsum()
         first_day: date = daily_consumption["fecha"].iloc[0]
         daily_consumption["dias_desde_inicio"] = (
-            pd.to_datetime(daily_consumption["fecha"])
-            - pd.Timestamp(first_day)
+            pd.to_datetime(daily_consumption["fecha"]) - pd.Timestamp(first_day)
         ).dt.days
 
         x = daily_consumption[["dias_desde_inicio"]]
@@ -124,7 +119,7 @@ def calcular_prediccion_insumo(
         predictions = model.predict(x)
         mae = float(mean_absolute_error(y, predictions))
         rmse = float(mean_squared_error(y, predictions) ** 0.5)
-    except Exception:
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError):
         return _empty_prediction(insumo, estado_fisico)
 
     if tasa <= 0:
