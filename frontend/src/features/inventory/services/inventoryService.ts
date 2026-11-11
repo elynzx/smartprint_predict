@@ -193,12 +193,18 @@ export async function updateSupply(
   });
 }
 
-export function fetchKardexMovements(
+export async function fetchKardexMovements(
   token: string,
   supplyId?: number,
 ): Promise<MovementRecord[]> {
   const params = supplyId ? `?insumo_id=${supplyId}` : "";
-  return apiRequest<MovementRecord[]>(`/api/movimientos${params}`, {}, token);
+  const raw = await apiRequest<
+    MovementRecord[] | { items?: MovementRecord[] }
+  >(`/api/movimientos${params}`, {}, token);
+  if (Array.isArray(raw)) {
+    return raw;
+  }
+  return Array.isArray(raw?.items) ? raw.items : [];
 }
 
 export function createKardexMovement(
