@@ -6,33 +6,38 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { login as loginRequest, type AuthUser } from "../api";
+import { apiRequest } from "../api/client";
+import type {
+  AuthContextValue,
+  AuthSession,
+  LoginResponse,
+} from "../features/auth/types";
 
-interface AuthContextValue {
-  user: AuthUser | null;
-  token: string | null;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<AuthUser>;
-  logout: () => void;
-}
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined,
+);
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const STORAGE_KEY = "smartprint.auth";
 
+function loginRequest(email: string, password: string): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<{
-    token: string;
-    user: AuthUser;
-  } | null>(() => {
+  const [session, setSession] = useState<AuthSession | null>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved
-      ? (JSON.parse(saved) as { token: string; user: AuthUser })
-      : null;
+    return saved ? (JSON.parse(saved) as AuthSession) : null;
   });
 
   useEffect(() => {
-    if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    else localStorage.removeItem(STORAGE_KEY);
+    if (session) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }, [session]);
 
   const value = useMemo<AuthContextValue>(
@@ -53,8 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth(): AuthContextValue {
+export function useAuthContext(): AuthContextValue {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth debe usarse dentro de AuthProvider.");
+  if (!context) {
+    throw new Error("useAuth debe utilizarse dentro de AuthProvider.");
+  }
   return context;
 }
+
+export const useAuth = useAuthContext;
