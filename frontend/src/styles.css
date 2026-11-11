@@ -140,6 +140,11 @@ kbd {
   color: #75819a;
   font-size: 14px;
 }
+
+.btn-row-icon {
+  width: 100px;
+}
+
 .profile {
   display: flex;
   align-items: center;
@@ -165,6 +170,85 @@ kbd {
   background: #e9f1ff;
   color: #0f52ba;
   font-weight: 700;
+}
+.profile-dropdown-wrapper {
+  position: relative;
+}
+.profile-caret {
+  color: #75819a;
+  font-size: 12px;
+  margin-left: 2px;
+}
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 245px;
+  background: #ffffff;
+  border: 1px solid #e8edf5;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(23, 35, 61, 0.12);
+  padding: 8px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+}
+.profile-dropdown-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+}
+.profile-dropdown-header strong {
+  font-size: 14px;
+  color: #17233d;
+}
+.profile-dropdown-header small {
+  font-size: 12px;
+  color: #75819a;
+}
+.profile-role-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: #e9f1ff;
+  color: #0f52ba;
+}
+.profile-dropdown-divider {
+  height: 1px;
+  background: #e8edf5;
+  margin: 4px 0;
+}
+.profile-dropdown-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #17233d;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.profile-dropdown-item:hover {
+  background: #f4f7fe;
+}
+.profile-logout-btn {
+  color: #ef4444 !important;
+}
+.profile-logout-btn:hover {
+  background: #fff0f0 !important;
 }
 .page-content {
   padding: 36px;
@@ -371,6 +455,7 @@ h1 {
   border-radius: 99px;
   font-size: 12px;
   font-weight: 700;
+  width: 90px;
 }
 .status-dot {
   display: inline-block;
