@@ -36,3 +36,18 @@ export interface MovementHistoryItem {
   usuario_id: number;
   usuario_nombre: string;
 }
+
+export interface PaginatedMovementsResponse {
+  items: MovementHistoryItem[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
+export interface MovementsQueryParams {
+  page?: number;
+  limit?: number;
+  insumo_id?: number;
+  tipo?: MovementType | string;
+}
