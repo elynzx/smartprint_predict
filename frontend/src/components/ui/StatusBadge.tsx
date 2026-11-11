@@ -24,6 +24,16 @@ const STATUS_STYLE_MAP: Record<
       "status warning bg-[#FFF8E7] text-[#F59E0B] border border-[#FFF8E7]",
     dotClass: "status-dot dot-warning",
   },
+  Alerta: {
+    badgeClass:
+      "status warning bg-[#FFF8E7] text-[#F59E0B] border border-[#FFF8E7]",
+    dotClass: "status-dot dot-warning",
+  },
+  Revisión: {
+    badgeClass:
+      "status warning bg-[#FFF8E7] text-[#F59E0B] border border-[#FFF8E7]",
+    dotClass: "status-dot dot-warning",
+  },
   "Stock Limitado": {
     badgeClass:
       "status warning bg-[#FFF8E7] text-[#F59E0B] border border-[#FFF8E7]",
