@@ -83,4 +83,12 @@ def create_movimiento(
     db.add(movimiento)
     db.commit()
     db.refresh(movimiento)
-    return {"id": movimiento.id, "insumo_id": movimiento.insumo_id, "tipo": movimiento.tipo}
+    return {
+        "id": movimiento.id,
+        "insumo_id": movimiento.insumo_id,
+        "tipo": movimiento.tipo.value if hasattr(movimiento.tipo, "value") else str(movimiento.tipo),
+        "cantidad": float(movimiento.cantidad),
+        "saldo_resultante": float(insumo.stock_actual),
+        "fecha_operacion": movimiento.fecha_operacion.isoformat(),
+        "usuario_id": movimiento.usuario_id,
+    }
